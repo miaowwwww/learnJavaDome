@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<title>uploadimg</title>
+	<style>
+		img {
+			max-width: 600px;
+		}
+	</style>
+</head>
+<body>
+
+	<input type="file" accept="image/*" id='file' />
+	<canvas id="myCanvas"></canvas>
+	<hr>
+	<img id="ago">
+	<hr>
+	<button id='btn'>click</button>
+	<img id="press">
+	学到的地方
+1. file API: new FileReader();
+2. canvas.toDataURL(file.type, 0.0~1.0); canvas描绘出来的图片再转出来base64；类型&压缩比例
+3. 发送给后台的时候要删除base64前面多余的22个字符Pic.replace(/^data:image\/(png|jpg);base64,/, "");
+4. input.onchange(e){e.target.files[0];这是一个file文件，把它传给 filerender.readAsDataURL(file)}
+5. canvase画出来的图片，可能比原jpg/jpeg 还要大；转传来才会变小；
+6. cancas：ie9+， FileReader(): ie10+, 移动端好像很差
+	<script>
+        function getUrl(fil, id) {
+            var Cnv = document.getElementById('myCanvas');
+            var Cntx = Cnv.getContext('2d');//获取2d编辑容器
+            var imgss =   new Image();//创建一个图片
+            var agoimg = document.getElementById("ago");
+                var reader = new FileReader();
+
+                reader.onload = function (e) {
+                	console.log(e)
+                    agoimg.onload = function () {
+                        //等比缩放
+                        var m = imgss.width / imgss.height;
+                         Cnv.height =300;//该值影响缩放后图片的大小
+                         Cnv.width= 300*m ;
+                        //img放入画布中
+                        //设置起始坐标，结束坐标
+                        Cntx.drawImage(agoimg, 0, 0,300*m,300);
+                    }
+
+                    url = e.target.result;
+                    imgss.src = url;
+                    agoimg.src = url;
+                }
+                reader.readAsDataURL(fil);
+        }
+
+
+
+        function  pressss(){//
+            //获取canvas压缩后的图片数据.files
+            console.log('type:', file_input.files.type)
+            var Pic = document.getElementById("myCanvas").toDataURL(file_input.file.type, 0.6);
+            var imgs =document.getElementById("press");
+            imgs.src =Pic ;
+            //上传
+            // 去除多余，得到base64编码的图片字节流
+            // Pic = Pic.replace(/^data:image\/(png|jpg);base64,/, "");
+            //可以用ajax提交到后台，提交后可以直接存数据库，也可以保存成图片，此处略
+        }
+
+
+        var file_input = document.getElementById('file')
+        file_input.onchange = function addfile(e) {
+        	console.log(e);
+        	console.log(this.value);
+        	this.file = e.target.files[0];
+        	getUrl(e.target.files[0]);
+        }
+
+        var btn = document.getElementById('btn');
+        btn.onclick = function() {
+        	pressss();
+        }
+
+		function UpLoad(e) {  
+		    var f = e.files[0];  
+		    fileType = f.type;  
+		    if(/image\/\w+/.test(fileType)) {  
+		        var fileReader = new FileReader();  
+		        fileReader.readAsDataURL(f);  
+		        fileReader.onload = function(event) {  
+		            var result = event.target.result; //返回的dataURL   
+		            var image = new Image();  
+		            image.src = result;  
+		            //若图片大小大于1M，压缩后再上传，否则直接上传  
+		             if(f.size>1024*1024){     
+		                         image.onload = function() { //创建一个image对象，给canvas绘制使用  
+		                    var canvas = document.getElementById("canvas");     
+		                    canvas.width = this.width;  
+		                    canvas.height = this.height; //计算等比缩小后图片宽高   
+		                    var ctx = canvas.getContext('2d');  
+		                    ctx.drawImage(this, 0, 0, canvas.width, canvas.height);  
+		                    var newImageData = canvas.toDataURL(fileType, 0.8); //重新生成图片      
+		                        sendData = newImageData.replace("data:"+fileType+";base64,",'');                  
+		                    dataLength=decodeBase64(sendData).length;//base64位图片长度（这里没有写这个方法）                 
+		                    $("#imgUrl").val(sendData);  
+		                    $("#preViewImg").attr("src",newImageData);  
+		                    $("#canvas").hide();  
+		                }  
+		                 }else{  
+		                        image.onload = function() { //创建一个image对象，给canvas绘制使用     
+		                sendData = result.replace("data:"+fileType+";base64,",'');    
+		                dataLength=decodeBase64(sendData).length;  
+		                $("#preViewImg").attr("src",result);  
+		                $("#imgUrl").val(sendData);                   
+		            }  
+		             }  
+		        }  
+		    } else {  
+		        alert("请选择图片");  
+		    }  
+		}  
+
+	</script>
+</body>
+</html>
